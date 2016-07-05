@@ -13,6 +13,7 @@ import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
 import org.inventivetalent.pluginannotations.command.*;
 import org.inventivetalent.regionapi.RegionAPI;
+import org.mcstats.MetricsLite;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,14 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 	public void onEnable() {
 		APIManager.initAPI(RegionAPI.class);
 		PluginAnnotations.loadAll(this, this);
+
+		try {
+			MetricsLite metrics = new MetricsLite(this);
+			if (metrics.start()) {
+				getLogger().info("Metrics started");
+			}
+		} catch (Exception e) {
+		}
 	}
 
 	@Command(name = "copyFlags",
