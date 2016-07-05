@@ -11,12 +11,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
-import org.inventivetalent.pluginannotations.command.Command;
-import org.inventivetalent.pluginannotations.command.JoinedArg;
-import org.inventivetalent.pluginannotations.command.OptionalArg;
-import org.inventivetalent.pluginannotations.command.Permission;
+import org.inventivetalent.pluginannotations.command.*;
 import org.inventivetalent.regionapi.RegionAPI;
 
+import java.util.List;
 import java.util.Map;
 
 public class FlagsCopy extends JavaPlugin implements Listener {
@@ -96,6 +94,29 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 		}
 	}
 
+	@Completion
+	public void copyFlags(List<String> completions, CommandSender sender, String source, String dest, String world, String flagMode) {
+		if (sender instanceof Player) {
+			RegionManager regionManager = RegionAPI.getRegionManager(((Player) sender).getWorld());
+			if (regionManager != null) {
+				if ((source == null || source.isEmpty() || regionManager.getRegion(source) == null) || dest == null || dest.isEmpty() || regionManager.getRegion(dest) == null) {
+					completions.addAll(regionManager.getRegions().keySet());
+					return;
+				}
+			}
+		}
+		if (world == null || world.isEmpty() || Bukkit.getWorld(world) == null) {
+			for (World world1 : Bukkit.getWorlds()) {
+				completions.add(world1.getName());
+			}
+			return;
+		}
+		if (flagMode == null || flagMode.isEmpty() || (!"merge".equalsIgnoreCase(flagMode) || !"replace".equalsIgnoreCase(flagMode))) {
+			completions.add("merge");
+			completions.add("replace");
+		}
+	}
+
 	@Command(name = "batchFlag",
 			 aliases = { "multiFlag" },
 			 usage = "<regions> <flag name> <value>",
@@ -123,6 +144,17 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 
 		for (ProtectedRegion region : regions) {
 			sender.chat("/worldguard:region flag " + region.getId() + " " + flag + " " + value);
+		}
+	}
+
+	@Completion
+	public void batchFlag(List<String> completions, Player sender, String regionsString, String flag, String value) {
+		RegionManager regionManager = RegionAPI.getRegionManager( sender.getWorld());
+		if (regionManager != null) {
+			if (flag == null || flag.isEmpty()) {
+				completions.addAll(regionManager.getRegions().keySet());
+				return;
+			}
 		}
 	}
 
