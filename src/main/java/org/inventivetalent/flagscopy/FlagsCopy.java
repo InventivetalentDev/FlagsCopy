@@ -12,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.inventivetalent.apihelper.APIManager;
 import org.inventivetalent.pluginannotations.PluginAnnotations;
 import org.inventivetalent.pluginannotations.command.Command;
+import org.inventivetalent.pluginannotations.command.JoinedArg;
 import org.inventivetalent.pluginannotations.command.OptionalArg;
 import org.inventivetalent.pluginannotations.command.Permission;
 import org.inventivetalent.regionapi.RegionAPI;
@@ -40,7 +41,7 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 					 + "- replace clears all flags first and then sets the new ones",
 			 min = 2,
 			 max = 4,
-			 fallbackPrefix = "regioncopy")
+			 fallbackPrefix = "flagcopy")
 	@Permission("flagscopy.copy")
 	public void copyFlags(CommandSender sender, String source, String dest, @OptionalArg String worldName, @OptionalArg(def = "merge") String flagMode) {
 		if (!(sender instanceof Player) && (worldName == null || worldName.isEmpty())) {
@@ -92,6 +93,36 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 			}
 			sender.sendMessage("§aFlags merged, added §7" + addCount + "§a flags, skipped §7" + skipCount + "§a existing flags.");
 			return;
+		}
+	}
+
+	@Command(name = "batchFlag",
+			 aliases = { "multiFlag" },
+			 usage = "<regions> <flag name> <value>",
+			 description = "Set a flag for multiple regions (separated by commas)",
+			 min = 3,
+			 max = -1,
+			 fallbackPrefix = "flagcopy")
+	@Permission("flagscopy.batch")
+	public void batchFlag(Player sender, String regionsString, String flag, @JoinedArg String value) {
+		RegionManager regionManager = RegionAPI.getRegionManager(sender.getWorld());
+		if (regionManager == null) {
+			sender.sendMessage("§cThis world doesn't have a region manager, what's going on?!");
+			return;
+		}
+		String[] regionNames = regionsString.split(",");
+		ProtectedRegion[] regions = new ProtectedRegion[regionNames.length];
+		for (int i = 0; i < regionNames.length; i++) {
+			ProtectedRegion region = regionManager.getRegion(regionNames[i]);
+			if (region == null) {
+				sender.sendMessage("§cRegion '" + regionNames[i] + "' not found");
+				return;
+			}
+			regions[i] = region;
+		}
+
+		for (ProtectedRegion region : regions) {
+			sender.chat("/worldguard:region flag " + region.getId() + " " + flag + " " + value);
 		}
 	}
 
