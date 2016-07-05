@@ -50,7 +50,7 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 			 max = 4,
 			 fallbackPrefix = "flagcopy")
 	@Permission("flagscopy.copy")
-	public void copyFlags(CommandSender sender, String source, String dest, @OptionalArg String worldName, @OptionalArg(def = "merge") String flagMode) {
+	public void copyFlags(CommandSender sender, String source, String destString, @OptionalArg String worldName, @OptionalArg(def = "merge") String flagMode) {
 		if (!(sender instanceof Player) && (worldName == null || worldName.isEmpty())) {
 			sender.sendMessage("§cPlease specify a world");
 			return;
@@ -66,43 +66,53 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 			}
 		}
 
-		if (source.equals(dest)) {
-			sender.sendMessage("§cCan't copy from " + source + " to " + dest);
-		}
-
 		RegionManager regionManager = RegionAPI.getRegionManager(world);
 		if (regionManager == null) {
 			sender.sendMessage("§cThis world doesn't have a region manager, what's going on?!");
 			return;
 		}
 		ProtectedRegion sourceRegion = regionManager.getRegion(source);
-		ProtectedRegion destRegion = regionManager.getRegion(dest);
-
 		if (sourceRegion == null) {
 			sender.sendMessage("§cSource region '" + source + "' not found");
 			return;
 		}
-		if (destRegion == null) {
-			sender.sendMessage("§cDestination region '" + dest + "' not found");
-			return;
+
+		String[] dests = destString.split(",");
+		ProtectedRegion[] destRegions = new ProtectedRegion[dests.length];
+		for (int i = 0; i < dests.length; i++) {
+			if (source.equals(dests[i])) {
+				sender.sendMessage("§cCan't copy from " + source + " to " + dests[i]);
+				return;
+			}
+			ProtectedRegion region = regionManager.getRegion(dests[i]);
+			if (region == null) {
+				sender.sendMessage("§cDestination region '" + destString + "' not found");
+				return;
+			}
+			destRegions[i] = region;
+
 		}
 
 		if ("replace".equals(flagMode.toLowerCase())) {
-			destRegion.setFlags(sourceRegion.getFlags());
-			sender.sendMessage("§aFlags replaced.");
+			for (ProtectedRegion region : destRegions) {
+				region.setFlags(sourceRegion.getFlags());
+			}
+			sender.sendMessage("§aFlags replaced for §7" + destRegions.length + "§a regions.");
 			return;
 		} else {// merge
 			int addCount = 0;
 			int skipCount = 0;
-			for (Map.Entry<Flag<?>, Object> entry : sourceRegion.getFlags().entrySet()) {
-				if (destRegion.getFlag(entry.getKey()) == null) {
-					destRegion.getFlags().put(entry.getKey(), entry.getValue());
-					addCount++;
-				} else {
-					skipCount++;
+			for (ProtectedRegion region : destRegions) {
+				for (Map.Entry<Flag<?>, Object> entry : sourceRegion.getFlags().entrySet()) {
+					if (region.getFlag(entry.getKey()) == null) {
+						region.getFlags().put(entry.getKey(), entry.getValue());
+						addCount++;
+					} else {
+						skipCount++;
+					}
 				}
 			}
-			sender.sendMessage("§aFlags merged, added §7" + addCount + "§a flags, skipped §7" + skipCount + "§a existing flags.");
+			sender.sendMessage("§aFlags merged, added §7" + addCount + "§a flags, skipped §7" + skipCount + "§a existing flags for §7" + destRegions.length + "§a regions.");
 			return;
 		}
 	}
