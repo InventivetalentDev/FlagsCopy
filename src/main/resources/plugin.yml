@@ -1,0 +1,4 @@
+name: FlagsCopy
+main: org.inventivetalent.flagscopy.FlagsCopy
+author: inventivetalent
+version: ${project.version}
