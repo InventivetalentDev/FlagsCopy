@@ -57,6 +57,10 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 			}
 		}
 
+		if (source.equals(dest)) {
+			sender.sendMessage("§cCan't copy from " + source + " to " + dest);
+		}
+
 		RegionManager regionManager = RegionAPI.getRegionManager(world);
 		if (regionManager == null) {
 			sender.sendMessage("§cThis world doesn't have a region manager, what's going on?!");
@@ -149,7 +153,7 @@ public class FlagsCopy extends JavaPlugin implements Listener {
 
 	@Completion
 	public void batchFlag(List<String> completions, Player sender, String regionsString, String flag, String value) {
-		RegionManager regionManager = RegionAPI.getRegionManager( sender.getWorld());
+		RegionManager regionManager = RegionAPI.getRegionManager(sender.getWorld());
 		if (regionManager != null) {
 			if (flag == null || flag.isEmpty()) {
 				completions.addAll(regionManager.getRegions().keySet());
